@@ -7,6 +7,8 @@ let stompClient = null;
 let stompClientGeneral = null; 
 let mensajeEnEdicionId = null;
 
+let enviandoMensaje = false; // Candado para evitar envíos múltiples
+
 if (!usuarioActual) {
     window.location.href = 'index.html'; 
 } else {
@@ -308,21 +310,33 @@ function mostrarVistaPrevia() {
     }
 }
 
-// 8. Enviar o Guardar Edición
+// 8. Enviar o Guardar Edición con protección Anti-Spam
 async function enviarMensaje() {
-    if (!conversacionActiva) return;
+    // Si no hay chat activo o ya se está enviando un mensaje, no hacemos nada
+    if (!conversacionActiva || enviandoMensaje) return;
 
-    const texto = document.getElementById('input-texto').value;
+    const inputTexto = document.getElementById('input-texto');
     const archivoInput = document.getElementById('input-imagen');
+    const texto = inputTexto.value;
     const archivo = archivoInput.files[0];
 
+    // Si todo está vacío, ignorar
     if (!texto.trim() && !archivo) return;
 
-    if (mensajeEnEdicionId) {
-        const idEditando = mensajeEnEdicionId;
-        cancelarEdicion(); 
+    // --- ACTIVAR CANDADO Y CAMBIAR BOTÓN VISUALMENTE ---
+    enviandoMensaje = true;
+    const btnSend = document.querySelector('.btn-send');
+    const iconoOriginal = btnSend.innerHTML; 
+    btnSend.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>'; // Pone animación de carga
+    btnSend.style.opacity = '0.6';
+    btnSend.style.cursor = 'not-allowed';
 
-        try {
+    try {
+        // SI ESTÁ ACTIVO EL MODO EDICIÓN
+        if (mensajeEnEdicionId) {
+            const idEditando = mensajeEnEdicionId;
+            cancelarEdicion(); 
+
             const respuesta = await fetch(`${API_URL}/api/mensajes/editar/${idEditando}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
@@ -330,31 +344,41 @@ async function enviarMensaje() {
             });
 
             if (!respuesta.ok) mostrarMiniModal("No se pudo actualizar el mensaje.", false);
-        } catch (e) {
-            console.error("Error al editar mensaje", e);
+            return; // Salimos de la función aquí para no enviar uno nuevo
         }
-        return;
-    }
 
-    const formData = new FormData();
-    formData.append('idConversacion', conversacionActiva);
-    formData.append('idRemitente', usuarioActual.idUsuario);
-    if (texto) formData.append('contenido', texto);
-    if (archivo) formData.append('imagen', archivo);
+        // FLUJO NORMAL DE ENVÍO NUEVO
+        const formData = new FormData();
+        formData.append('idConversacion', conversacionActiva);
+        formData.append('idRemitente', usuarioActual.idUsuario);
+        if (texto) formData.append('contenido', texto);
+        if (archivo) formData.append('imagen', archivo);
 
-    try {
         const respuesta = await fetch(`${API_URL}/api/mensajes/enviar`, {
             method: 'POST',
             body: formData 
         });
 
         if (respuesta.ok) {
-            document.getElementById('input-texto').value = '';
+            // Limpiamos los inputs solo si se envió con éxito
+            inputTexto.value = '';
             archivoInput.value = '';
             document.getElementById('nombre-archivo-preview').classList.add('hidden');
+        } else {
+            mostrarMiniModal("Ocurrió un error al enviar el mensaje.", false);
         }
+
     } catch (e) {
         console.error("Error al enviar mensaje", e);
+        mostrarMiniModal("Fallo de conexión. Revisa tu internet.", false);
+    } finally {
+        // --- SE EJECUTA SIEMPRE AL FINAL (Éxito o Error) ---
+        // Quitamos el candado y restauramos el botón original
+        enviandoMensaje = false;
+        btnSend.innerHTML = iconoOriginal;
+        btnSend.style.opacity = '1';
+        btnSend.style.cursor = 'pointer';
+        inputTexto.focus(); // Regresa el cursor para seguir escribiendo rápido
     }
 }
 
