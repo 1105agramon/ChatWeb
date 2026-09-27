@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Privado</title>
+    <link rel="stylesheet" href="chat.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <div class="app-container">
+        
+        <!-- PANEL IZQUIERDO: Lista de Chats -->
+        <!-- Se le agrega el id "sidebar" para controlarlo desde JS en móviles -->
+        <aside class="sidebar" id="sidebar">
+            <header class="sidebar-header">
+                <div class="mi-perfil">
+                    <div class="avatar"><i class="fa-solid fa-user"></i></div>
+                    <span id="mi-nombre-perfil">Cargando...</span>
+                </div>
+                <div class="header-actions" style="display: flex; gap: 5px;">
+                    <!-- Botón para desactivar cuenta -->
+                    <button class="btn-icon btn-danger" onclick="confirmarDesactivarCuenta()" title="Desactivar cuenta">
+                        <i class="fa-solid fa-user-slash"></i>
+                    </button>
+                    <!-- Botón para cerrar sesión normal -->
+                    <button class="btn-icon" onclick="cerrarSesion()" title="Cerrar sesión">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                    </button>
+                </div>
+            </header>
+            
+            <!-- Buscador para iniciar nuevo chat -->
+            <div class="search-container">
+                <div class="search-box">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="buscar-numero" placeholder="Buscar por número (Ej: 5551234)">
+                    <button class="btn-icon-small" onclick="iniciarNuevoChat()">
+                        <i class="fa-solid fa-plus"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Lista dinámica de conversaciones -->
+            <div id="lista-conversaciones" class="chat-list">
+                <!-- Se llena con JS -->
+            </div>
+        </aside>
+
+        <!-- PANEL DERECHO: Área de Mensajes -->
+        <!-- Se le agrega el id "chat-area" para controlarlo desde JS en móviles -->
+        <main class="chat-area" id="chat-area">
+            
+            <!-- Estado inicial cuando no hay chat seleccionado -->
+            <div id="pantalla-vacia" class="empty-state active">
+                <i class="fa-solid fa-comments"></i>
+                <h2>Chat Privado Web</h2>
+                <p>Selecciona un chat para comenzar a enviar mensajes.</p>
+            </div>
+
+            <!-- Chat activo -->
+            <div id="pantalla-activa" class="active-chat hidden">
+                <header class="chat-header">
+                    <!-- NUEVO: Botón de atrás (solo visible en móviles) -->
+                    <button class="btn-icon btn-back-mobile" onclick="volverAListaChats()">
+                        <i class="fa-solid fa-arrow-left"></i>
+                    </button>
+                    <div class="contacto-info">
+                        <div class="avatar"><i class="fa-solid fa-user"></i></div>
+                        <div class="detalles-contacto">
+                            <h3 id="nombre-chat-activo">Nombre Contacto</h3>
+                        </div>
+                    </div>
+                </header>
+
+                <div id="historial-mensajes" class="messages-container">
+                    <!-- Los globos de chat se generan aquí -->
+                </div>
+
+                <footer class="chat-footer">
+                    <!-- Banner flotante de edición -->
+                    <div id="banner-edicion" class="edit-banner hidden">
+                        <div class="edit-banner-content">
+                            <i class="fa-solid fa-pen"></i>
+                            <span>Editando mensaje</span>
+                        </div>
+                        <button class="btn-icon-small" onclick="cancelarEdicion()"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+
+                    <!-- Fila principal alineada horizontalmente -->
+                    <div class="footer-main-row">
+                        <input type="file" id="input-imagen" accept="image/*" style="display: none;" onchange="mostrarVistaPrevia()">
+                        <button class="btn-icon" onclick="document.getElementById('input-imagen').click()">
+                            <i class="fa-solid fa-paperclip"></i>
+                        </button>
+                        
+                        <div class="input-wrapper">
+                            <span id="nombre-archivo-preview" class="file-preview hidden"></span>
+                            <input type="text" id="input-texto" placeholder="Escribe un mensaje aquí...">
+                        </div>
+                        
+                        <button class="btn-icon btn-send" onclick="enviarMensaje()">
+                            <i class="fa-solid fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </footer>
+            </div>
+        </main>
+    </div>
+
+    <!-- MODAL / VENTANA FLOTANTE PARA VISUALIZAR IMÁGENES -->
+    <div id="modal-imagen" class="image-modal hidden">
+        <span class="modal-close" onclick="cerrarModalImagen()">&times;</span>
+        <img class="modal-content" id="img-ampliada" alt="Vista previa ampliada">
+    </div>
+
+    <!-- TOAST NOTIFICACIÓN (Flotante) -->
+    <div id="toast-notificacion" class="toast hidden">
+        <div class="toast-icon"><i class="fa-solid fa-bell"></i></div>
+        <div class="toast-content">
+            <h4 id="toast-titulo">Nuevo Mensaje</h4>
+            <p id="toast-cuerpo">Tienes un nuevo mensaje esperando.</p>
+        </div>
+    </div>
+    <!-- MINI MODAL FLOTANTE -->
+    <div id="mini-modal" class="mini-modal-overlay hidden">
+        <div class="mini-modal-box">
+            <p id="mini-modal-text" class="mini-modal-text">Mensaje aquí</p>
+            <div class="mini-modal-actions">
+                <button id="mini-btn-no" class="mini-btn mini-btn-cancel">NO</button>
+                <button id="mini-btn-si" class="mini-btn mini-btn-confirm">SÍ</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Librerías para WebSockets -->
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    
+    <script src="chat.js"></script>
+</body>
+</html>

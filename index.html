@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acceso - Chat Privado</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <div class="wrapper">
+        <h1 class="main-title" id="titulo-pantalla">INICIAR SESIÓN</h1>
+
+        <div class="dark-box">
+            
+            <!-- FORMULARIO DE LOGIN -->
+            <form id="form-login" class="active-form">
+                <div class="input-group">
+                    <div class="icon-box"><i class="fa-solid fa-phone"></i></div>
+                    <input type="text" id="log-telefono" placeholder="Número de teléfono" required>
+                </div>
+                
+                <div class="input-group">
+                    <div class="icon-box"><i class="fa-solid fa-lock"></i></div>
+                    <input type="password" id="log-password" placeholder="Contraseña" required>
+                </div>
+
+                <div class="options-row">
+                    <label class="remember-me">
+                        <input type="checkbox"> 
+                        <span class="checkmark"><i class="fa-solid fa-check"></i></span>
+                        Recordarme
+                    </label>
+                    <a href="#" class="forgot-pass" onclick="mostrarVista('recuperar')">¿Olvidaste tu contraseña?</a>
+                </div>
+
+                <p id="error-login" class="texto-error"></p>
+                <button type="button" class="btn-primary" onclick="login()">ENTRAR</button>
+            </form>
+
+            <!-- FORMULARIO DE REGISTRO -->
+            <form id="form-registro" class="hidden-form">
+                <div class="input-group">
+                    <div class="icon-box"><i class="fa-solid fa-phone"></i></div>
+                    <input type="text" id="reg-telefono" placeholder="Número de teléfono" required>
+                </div>
+
+                <div class="input-group">
+                    <div class="icon-box"><i class="fa-solid fa-user"></i></div>
+                    <input type="text" id="reg-alias" placeholder="Nombre de usuario (Alias)" required>
+                </div>
+                
+                <div class="input-group">
+                    <div class="icon-box"><i class="fa-solid fa-lock"></i></div>
+                    <input type="password" id="reg-password" placeholder="Contraseña" required>
+                </div>
+
+                <!-- CAMBIO: text-transform uppercase para forzar mayúsculas visualmente -->
+                <div class="input-group">
+                    <div class="icon-box"><i class="fa-solid fa-circle-question"></i></div>
+                    <input type="text" id="reg-pregunta" placeholder="Escribe tu propia pregunta secreta" style="text-transform: uppercase;" required>
+                </div>
+
+                <div class="input-group">
+                    <div class="icon-box"><i class="fa-solid fa-pencil"></i></div>
+                    <input type="text" id="reg-respuesta" placeholder="Tu respuesta a la pregunta" style="text-transform: uppercase;" required>
+                </div>
+
+                <div class="input-group">
+                    <div class="icon-box"><i class="fa-solid fa-th"></i></div>
+                    <input type="password" id="reg-pin" placeholder="PIN de recuperación (4 dígitos)" maxlength="4" required>
+                </div>
+
+                <p id="error-registro" class="texto-error"></p>
+                <button type="button" class="btn-primary" onclick="registrar()">REGISTRARSE</button>
+            </form>
+
+            <!-- FORMULARIO DE RECUPERACIÓN DE CONTRASEÑA -->
+            <form id="form-recuperar" class="hidden-form">
+                <p style="color: var(--texto-secundario); font-size: 12px; margin-bottom: 15px; text-align: center;">Ingresa tu número para buscar tu cuenta</p>
+                
+                <!-- PASO 1: Buscar usuario -->
+                <div class="input-group" id="rec-grupo-telefono">
+                    <div class="icon-box"><i class="fa-solid fa-phone"></i></div>
+                    <input type="text" id="rec-telefono" placeholder="Número de teléfono" required>
+                </div>
+                
+                <button type="button" id="btn-buscar-cuenta" class="btn-primary" onclick="buscarCuenta()">BUSCAR CUENTA</button>
+                
+                <!-- PASO 2: Validar y cambiar (Oculto inicialmente) -->
+                <div id="rec-paso-2" style="display: none; flex-direction: column; width: 100%; margin-top: 10px;">
+                    <p id="rec-pregunta-texto" style="color: var(--acento-principal); font-size: 13px; font-weight: bold; margin-bottom: 15px; text-align: center; text-transform: uppercase;"></p>
+                    
+                    <div class="input-group">
+                        <div class="icon-box"><i class="fa-solid fa-pencil"></i></div>
+                        <input type="text" id="rec-respuesta" placeholder="Tu respuesta secreta" style="text-transform: uppercase;" required>
+                    </div>
+                    
+                    <div class="input-group">
+                        <div class="icon-box"><i class="fa-solid fa-th"></i></div>
+                        <input type="password" id="rec-pin" placeholder="Tu PIN de 4 dígitos" maxlength="4" required>
+                    </div>
+                    
+                    <div class="input-group">
+                        <div class="icon-box"><i class="fa-solid fa-lock"></i></div>
+                        <input type="password" id="rec-nueva-password" placeholder="Escribe tu nueva contraseña" required>
+                    </div>
+                    
+                    <button type="button" class="btn-primary" onclick="ejecutarRestablecimiento()">CAMBIAR CONTRASEÑA</button>
+                </div>
+
+                <p id="error-recuperar" class="texto-error" style="margin-top: 10px;"></p>
+                
+                <a href="#" class="forgot-pass" style="text-align: center; margin-top: 15px; display: block;" onclick="mostrarVista('login')">Volver a Iniciar Sesión</a>
+            </form>
+
+        </div>
+
+        <button class="btn-secondary" id="btn-toggle">CREAR CUENTA</button>
+    </div>
+    <!-- MINI MODAL FLOTANTE -->
+    <div id="mini-modal" class="mini-modal-overlay hidden">
+        <div class="mini-modal-box">
+            <p id="mini-modal-text" class="mini-modal-text">Mensaje aquí</p>
+            <div class="mini-modal-actions">
+                <button id="mini-btn-no" class="mini-btn mini-btn-cancel">NO</button>
+                <button id="mini-btn-si" class="mini-btn mini-btn-confirm">SÍ</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
