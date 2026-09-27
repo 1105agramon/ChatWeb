@@ -47,28 +47,7 @@ function mostrarMiniModal(mensaje, esConfirmacion, callbackSi) {
     }
 }
 
-// --- DESACTIVAR CUENTA LÓGICAMENTE ---
-function confirmarDesactivarCuenta() {
-    mostrarMiniModal("¿Estás seguro de desactivar tu cuenta?\nSe cerrará tu sesión.", true, async () => {
-        try {
-            const respuesta = await fetch(`${API_URL}/api/usuarios/${usuarioActual.idUsuario}/desactivar`, {
-                method: 'PUT'
-            });
-
-            if (respuesta.ok) {
-                mostrarMiniModal("Cuenta desactivada correctamente.", false, () => {
-                    cerrarSesion();
-                });
-            } else {
-                const error = await respuesta.text();
-                mostrarMiniModal("Error al desactivar: " + error, false);
-            }
-        } catch (e) {
-            mostrarMiniModal("Error de conexión.", false);
-        }
-    });
-}
-
+// --- CERRAR SESIÓN ---
 function cerrarSesion() {
     if (stompClient !== null) stompClient.disconnect();
     if (stompClientGeneral !== null) stompClientGeneral.disconnect();
@@ -312,7 +291,6 @@ function mostrarVistaPrevia() {
 
 // 8. Enviar o Guardar Edición con protección Anti-Spam
 async function enviarMensaje() {
-    // Si no hay chat activo o ya se está enviando un mensaje, no hacemos nada
     if (!conversacionActiva || enviandoMensaje) return;
 
     const inputTexto = document.getElementById('input-texto');
@@ -320,19 +298,16 @@ async function enviarMensaje() {
     const texto = inputTexto.value;
     const archivo = archivoInput.files[0];
 
-    // Si todo está vacío, ignorar
     if (!texto.trim() && !archivo) return;
 
-    // --- ACTIVAR CANDADO Y CAMBIAR BOTÓN VISUALMENTE ---
     enviandoMensaje = true;
     const btnSend = document.querySelector('.btn-send');
     const iconoOriginal = btnSend.innerHTML; 
-    btnSend.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>'; // Pone animación de carga
+    btnSend.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>'; 
     btnSend.style.opacity = '0.6';
     btnSend.style.cursor = 'not-allowed';
 
     try {
-        // SI ESTÁ ACTIVO EL MODO EDICIÓN
         if (mensajeEnEdicionId) {
             const idEditando = mensajeEnEdicionId;
             cancelarEdicion(); 
@@ -344,10 +319,9 @@ async function enviarMensaje() {
             });
 
             if (!respuesta.ok) mostrarMiniModal("No se pudo actualizar el mensaje.", false);
-            return; // Salimos de la función aquí para no enviar uno nuevo
+            return; 
         }
 
-        // FLUJO NORMAL DE ENVÍO NUEVO
         const formData = new FormData();
         formData.append('idConversacion', conversacionActiva);
         formData.append('idRemitente', usuarioActual.idUsuario);
@@ -360,7 +334,6 @@ async function enviarMensaje() {
         });
 
         if (respuesta.ok) {
-            // Limpiamos los inputs solo si se envió con éxito
             inputTexto.value = '';
             archivoInput.value = '';
             document.getElementById('nombre-archivo-preview').classList.add('hidden');
@@ -372,13 +345,11 @@ async function enviarMensaje() {
         console.error("Error al enviar mensaje", e);
         mostrarMiniModal("Fallo de conexión. Revisa tu internet.", false);
     } finally {
-        // --- SE EJECUTA SIEMPRE AL FINAL (Éxito o Error) ---
-        // Quitamos el candado y restauramos el botón original
         enviandoMensaje = false;
         btnSend.innerHTML = iconoOriginal;
         btnSend.style.opacity = '1';
         btnSend.style.cursor = 'pointer';
-        inputTexto.focus(); // Regresa el cursor para seguir escribiendo rápido
+        inputTexto.focus(); 
     }
 }
 

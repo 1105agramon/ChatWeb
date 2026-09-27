@@ -19,15 +19,26 @@
                     <div class="avatar"><i class="fa-solid fa-user"></i></div>
                     <span id="mi-nombre-perfil">Cargando...</span>
                 </div>
-                <div class="header-actions" style="display: flex; gap: 5px;">
-                    <!-- Botón para desactivar cuenta -->
-                    <button class="btn-icon btn-danger" onclick="confirmarDesactivarCuenta()" title="Desactivar cuenta">
-                        <i class="fa-solid fa-user-slash"></i>
+                
+                <!-- NUEVO: Menú desplegable -->
+                <div class="header-actions" style="position: relative;">
+                    <button class="btn-icon" onclick="toggleMenuDesplegable()" title="Opciones">
+                        <i class="fa-solid fa-ellipsis-vertical"></i>
                     </button>
-                    <!-- Botón para cerrar sesión normal -->
-                    <button class="btn-icon" onclick="cerrarSesion()" title="Cerrar sesión">
-                        <i class="fa-solid fa-right-from-bracket"></i>
-                    </button>
+                    
+                    <!-- Opciones del menú -->
+                    <div id="menu-opciones" class="dropdown-menu hidden">
+                        <div class="dropdown-item" onclick="abrirModalPerfil()">
+                            <i class="fa-solid fa-user-pen"></i> Editar Perfil
+                        </div>
+                        <div class="dropdown-item" onclick="abrirModalSeguridad()">
+                            <i class="fa-solid fa-shield-halved"></i> Seguridad
+                        </div>
+                        <div class="dropdown-divider"></div>
+                        <div class="dropdown-item text-danger" onclick="cerrarSesion()">
+                            <i class="fa-solid fa-right-from-bracket"></i> Cerrar sesión
+                        </div>
+                    </div>
                 </div>
             </header>
             
@@ -133,11 +144,55 @@
             </div>
         </div>
     </div>
+
+    <!-- MODAL EDITAR PERFIL -->
+    <div id="modal-perfil" class="mini-modal-overlay hidden">
+        <div class="mini-modal-box" style="width: 320px;">
+            <h3 style="margin-bottom: 15px; color: var(--texto-principal);">Editar Perfil</h3>
+            
+            <div style="text-align: left; margin-bottom: 10px;">
+                <label style="font-size: 12px; color: var(--texto-secundario);">Alias / Nombre</label>
+                <input type="text" id="edit-alias" class="modal-input" placeholder="Tu nombre">
+            </div>
+            
+            <div style="text-align: left; margin-bottom: 20px;">
+                <label style="font-size: 12px; color: var(--texto-secundario);">Número de Celular</label>
+                <input type="text" id="edit-telefono" class="modal-input" placeholder="Tu número">
+            </div>
+
+            <div class="mini-modal-actions">
+                <button class="mini-btn mini-btn-cancel" onclick="cerrarModalPerfil()">Cancelar</button>
+                <button class="mini-btn mini-btn-confirm" onclick="guardarPerfil()">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL SEGURIDAD -->
+    <div id="modal-seguridad" class="mini-modal-overlay hidden">
+        <div class="mini-modal-box" style="width: 320px;">
+            <h3 style="margin-bottom: 15px; color: var(--texto-principal);">Seguridad</h3>
+            
+            <!-- Aquí irán los campos de PIN, Contraseña y Pregunta en el futuro -->
+            <p style="font-size: 13px; color: var(--texto-secundario); margin-bottom: 20px;">
+                Opciones de seguridad en construcción...
+            </p>
+
+            <div class="dropdown-divider"></div>
+            <button class="mini-btn" style="background: rgba(251,59,47,0.1); color: var(--acento-principal); width: 100%; margin-bottom: 15px;" onclick="confirmarDesactivarCuenta()">
+                <i class="fa-solid fa-user-slash"></i> Desactivar Cuenta
+            </button>
+
+            <div class="mini-modal-actions">
+                <button class="mini-btn mini-btn-cancel" style="width: 100%;" onclick="cerrarModalSeguridad()">Cerrar</button>
+            </div>
+        </div>
+    </div>
     
     <!-- Librerías para WebSockets -->
     <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
     
     <script src="chat.js"></script>
+    <script src="perfil.js"></script>
 </body>
 </html>
