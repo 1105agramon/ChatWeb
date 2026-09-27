@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:8080';
+const API_URL = 'https://chatweb.juangranados.org';
 
 // 1. Verificar sesión al cargar
 let usuarioActual = JSON.parse(localStorage.getItem('usuarioActual'));

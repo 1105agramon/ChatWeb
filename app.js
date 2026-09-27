@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:8080';
+const API_URL = 'https://chatweb.juangranados.org';
 
 const btnToggle = document.getElementById('btn-toggle');
 const formLogin = document.getElementById('form-login');
