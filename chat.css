@@ -218,6 +218,9 @@ body { background-color: var(--bg-base); display: flex; justify-content: center;
     .empty-state { display: none !important; }
     .mensaje { max-width: 85%; }
     .messages-container { padding: 15px 15px; }
+    .chat-footer {
+        padding-bottom: env(safe-area-inset-bottom, 15px); /* Protege contra la barra del iPhone */
+    }
 }
 
 /* --- TOAST DE NOTIFICACIONES EN LA APP --- */
