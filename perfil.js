@@ -20,6 +20,12 @@ document.addEventListener('click', function(event) {
 // --- APERTURA Y CIERRE DE MODALES ---
 function abrirModalPerfil() {
     document.getElementById('menu-opciones').classList.add('hidden');
+    
+    // NUEVO: Limpiar cualquier mensaje de error anterior al abrir
+    const msgBox = document.getElementById('perfil-mensaje');
+    msgBox.className = 'inline-message hidden';
+    msgBox.innerText = '';
+
     // Pre-carga los datos actuales en los inputs
     document.getElementById('edit-alias').value = usuarioActual.alias;
     document.getElementById('edit-telefono').value = usuarioActual.telefono;
@@ -44,12 +50,20 @@ function cerrarModalSeguridad() {
 async function guardarPerfil() {
     const nuevoAlias = document.getElementById('edit-alias').value.trim();
     const nuevoTelefono = document.getElementById('edit-telefono').value.trim();
+    const msgBox = document.getElementById('perfil-mensaje');
+
+    // Función interna para mostrar el texto en la caja
+    const mostrarMensajeInline = (texto, tipo) => {
+        msgBox.innerText = texto;
+        msgBox.className = `inline-message ${tipo}`;
+    };
 
     if (!nuevoAlias || !nuevoTelefono) {
-        mostrarMiniModal("Alias y Teléfono son obligatorios.", false);
+        mostrarMensajeInline("Alias y Teléfono son obligatorios.", "error");
         return;
     }
 
+    // Si el usuario no cambió nada, simplemente cerramos la ventana
     if (nuevoAlias === usuarioActual.alias && nuevoTelefono === usuarioActual.telefono) {
         cerrarModalPerfil();
         return;
@@ -68,31 +82,30 @@ async function guardarPerfil() {
         if (respuesta.ok) {
             const usuarioActualizado = await respuesta.json();
             
+            // Refresca la sesión guardada
             localStorage.setItem('usuarioActual', JSON.stringify(usuarioActualizado));
             usuarioActual = usuarioActualizado;
             
+            // Actualiza visualmente el nombre
             document.getElementById('mi-nombre-perfil').innerText = usuarioActual.alias;
             
-            cerrarModalPerfil();
-            mostrarMiniModal("¡Perfil actualizado correctamente!", false);
+            // Mensaje de éxito y cerramos la ventana tras 1.5 segundos
+            mostrarMensajeInline("¡Perfil actualizado correctamente!", "success");
+            setTimeout(() => {
+                cerrarModalPerfil();
+            }, 1500);
+
         } else {
             const error = await respuesta.text();
             
-            // --- NUEVO: Cerramos el modal de perfil antes de mostrar el error ---
-            cerrarModalPerfil(); 
-            
             if (error === "NUMERO_EXISTENTE" || respuesta.status === 409) {
-                mostrarMiniModal(
-                    "Este número ya está registrado por una tercera persona.\n\nSi crees que es un error, por favor comunícate con soporte enviando un correo a:\n1105agramon@gmail.com", 
-                    false
-                );
+                mostrarMensajeInline("Este número ya está registrado.\nSi crees que es un error, contacta a:\n1105agramon@gmail.com", "error");
             } else {
-                mostrarMiniModal(error, false);
+                mostrarMensajeInline(error, "error");
             }
         }
     } catch (e) {
-        cerrarModalPerfil();
-        mostrarMiniModal("Error de conexión al guardar el perfil.", false);
+        mostrarMensajeInline("Error de conexión al servidor.", "error");
     }
 }
 
