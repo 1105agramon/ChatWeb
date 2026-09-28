@@ -37,8 +37,22 @@ function cerrarModalPerfil() {
     document.getElementById('modal-perfil').classList.add('hidden');
 }
 
+// --- APERTURA Y CIERRE DEL MODAL DE SEGURIDAD ---
 function abrirModalSeguridad() {
     document.getElementById('menu-opciones').classList.add('hidden');
+    
+    // Limpiamos cualquier mensaje viejo al abrir la ventana
+    const msgBox = document.getElementById('seguridad-mensaje');
+    msgBox.className = 'inline-message hidden';
+    msgBox.innerText = '';
+
+    // Limpiamos los inputs por seguridad para que no quede nada escrito de antes
+    document.getElementById('seg-current-password').value = '';
+    document.getElementById('seg-new-password').value = '';
+    document.getElementById('seg-new-pin').value = '';
+    document.getElementById('seg-new-pregunta').value = '';
+    document.getElementById('seg-new-respuesta').value = '';
+
     document.getElementById('modal-seguridad').classList.remove('hidden');
 }
 
@@ -116,29 +130,38 @@ async function guardarSeguridad() {
     const newPin = document.getElementById('seg-new-pin').value.trim();
     const newPregunta = document.getElementById('seg-new-pregunta').value.trim();
     const newRespuesta = document.getElementById('seg-new-respuesta').value.trim();
+    
+    const msgBox = document.getElementById('seguridad-mensaje');
 
+    // Función interna para mostrar mensajes
+    const mostrarMensajeInline = (texto, tipo) => {
+        msgBox.innerText = texto;
+        msgBox.className = `inline-message ${tipo}`;
+    };
+
+    // Validaciones iniciales
     if (!currentPassword) {
-        mostrarMiniModal("Debes ingresar tu contraseña actual para autorizar los cambios.", false);
+        mostrarMensajeInline("Debes ingresar tu contraseña actual para autorizar los cambios.", "error");
         return;
     }
 
     if (!newPassword && !newPin && !newPregunta && !newRespuesta) {
-        mostrarMiniModal("No has ingresado ningún dato nuevo para actualizar.", false);
+        mostrarMensajeInline("No has escrito ningún dato nuevo para actualizar.", "error");
         return;
     }
 
     if (newPin && (newPin.length !== 4 || isNaN(newPin))) {
-        mostrarMiniModal("El nuevo PIN debe ser exactamente de 4 números.", false);
+        mostrarMensajeInline("El nuevo PIN debe ser exactamente de 4 números.", "error");
         return;
     }
 
     if (newPregunta && (!newPregunta.includes('¿') || !newPregunta.includes('?'))) {
-        mostrarMiniModal("La nueva pregunta debe incluir los signos (¿) y (?).", false);
+        mostrarMensajeInline("La nueva pregunta debe incluir los signos (¿) y (?).", "error");
         return;
     }
 
     if ((newPregunta && !newRespuesta) || (!newPregunta && newRespuesta)) {
-        mostrarMiniModal("Si deseas cambiar la pregunta de seguridad, debes ingresar tanto la nueva pregunta como la nueva respuesta.", false);
+        mostrarMensajeInline("Si cambias la pregunta de seguridad, debes ingresar tanto la pregunta como la respuesta.", "error");
         return;
     }
 
@@ -156,21 +179,18 @@ async function guardarSeguridad() {
         });
 
         if (respuesta.ok) {
-            mostrarMiniModal("¡Datos de seguridad actualizados correctamente!", false, () => {
+            mostrarMensajeInline("¡Datos de seguridad actualizados correctamente!", "success");
+            
+            // Cerramos la ventana automáticamente después de 1.5 segundos
+            setTimeout(() => {
                 cerrarModalSeguridad();
-                // Limpiamos los campos por seguridad
-                document.getElementById('seg-current-password').value = '';
-                document.getElementById('seg-new-password').value = '';
-                document.getElementById('seg-new-pin').value = '';
-                document.getElementById('seg-new-pregunta').value = '';
-                document.getElementById('seg-new-respuesta').value = '';
-            });
+            }, 1500);
         } else {
             const error = await respuesta.text();
-            mostrarMiniModal(error, false);
+            mostrarMensajeInline(error, "error"); // Muestra si la contraseña actual era incorrecta
         }
     } catch (e) {
-        mostrarMiniModal("Error de conexión con el servidor.", false);
+        mostrarMensajeInline("Error de conexión con el servidor.", "error");
     }
 }
 
