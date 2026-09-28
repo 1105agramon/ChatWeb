@@ -159,7 +159,7 @@ body {
 
 /* Mensajes Inline de los Modales */
 .inline-message { padding: 10px; border-radius: 6px; font-size: 12px; margin-bottom: 15px; text-align: center; white-space: pre-wrap; }
-.inline-message.error { background: rgba(251, 59, 47, 0.1); color: var(--acento-principal); border: 1px solid var(--acento-principal); }
+.inline-message.error { background: rgba(251, 59, 47, 0.1); color: var(--texto-principal); border: 1px solid var(--acento-principal); }
 .inline-message.success { background: rgba(46, 204, 113, 0.1); color: #2ecc71; border: 1px solid #2ecc71; }
 .inline-message.hidden { display: none; }
 
