@@ -16,6 +16,7 @@ if (!usuarioActual) {
     cargarConversaciones();
     conectarNotificacionesGenerales(); 
     configurarEnterEnInput(); 
+    configurarEnterBuscador();
     solicitarPermisoNotificaciones(); 
 }
 
@@ -94,7 +95,9 @@ async function cargarConversaciones() {
 
 // 3. Iniciar un chat nuevo
 async function iniciarNuevoChat() {
-    const numero = document.getElementById('buscar-numero').value;
+    const inputBuscador = document.getElementById('buscar-numero');
+    const numero = inputBuscador.value.trim(); // .trim() elimina espacios en blanco accidentales
+    
     if (!numero) return;
 
     try {
@@ -106,8 +109,9 @@ async function iniciarNuevoChat() {
         
         const contactos = await resBusqueda.json();
         
+        // Si la lista viene vacía, el usuario no existe
         if (contactos.length === 0) {
-            mostrarMiniModal("No se encontró ningún usuario con ese número.", false);
+            mostrarMiniModal("No se encontró ningún usuario registrado con el número:\n" + numero, false);
             return;
         }
 
@@ -116,11 +120,12 @@ async function iniciarNuevoChat() {
         const resChat = await fetch(`${API_URL}/api/conversaciones/iniciar?idUsuario1=${usuarioActual.idUsuario}&idUsuario2=${idDestino}`, { method: 'POST' });
         
         if (resChat.ok) {
-            document.getElementById('buscar-numero').value = '';
+            inputBuscador.value = ''; // Limpiamos la barra tras tener éxito
             cargarConversaciones(); 
         }
     } catch (e) {
         console.error("Error al iniciar chat", e);
+        mostrarMiniModal("Error de conexión al buscar el usuario.", false);
     }
 }
 
@@ -359,6 +364,17 @@ function configurarEnterEnInput() {
         if (event.key === 'Enter') {
             event.preventDefault(); 
             enviarMensaje();
+        }
+    });
+}
+
+// --- NUEVO: Configurar Enter en el Buscador ---
+function configurarEnterBuscador() {
+    const inputBuscador = document.getElementById('buscar-numero');
+    inputBuscador.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+            event.preventDefault(); // Evita comportamientos raros del navegador
+            iniciarNuevoChat();
         }
     });
 }
