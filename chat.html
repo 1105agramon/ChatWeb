@@ -217,6 +217,13 @@
             </button>
         </div>
     </div>
+
+    <!-- MENÚ CONTEXTUAL PARA ELIMINAR CHAT -->
+    <div id="menu-contextual" class="dropdown-menu hidden" style="position: fixed; z-index: 6000;">
+        <div class="dropdown-item text-danger" onclick="confirmarEliminarChat()">
+            <i class="fa-solid fa-trash"></i> Eliminar Chat
+        </div>
+    </div>
     
     <!-- Librerías para WebSockets -->
     <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>

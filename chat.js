@@ -56,6 +56,11 @@ function cerrarSesion() {
     window.location.href = 'index.html';
 }
 
+// --- VARIABLES PARA TOQUE LARGO EN MÓVILES ---
+let toqueLargoTimer;
+let esToqueLargo = false;
+let chatSeleccionadoContextual = null;
+
 // 2. Cargar lista de chats
 async function cargarConversaciones() {
     try {
@@ -76,7 +81,12 @@ async function cargarConversaciones() {
                 : '';
 
             return `
-                <div class="chat-item" onclick="abrirChat(${conv.idConversacion}, '${otroUsuario.alias}')">
+                <div class="chat-item" 
+                     onclick="abrirChatSeguro(${conv.idConversacion}, '${otroUsuario.alias}')"
+                     oncontextmenu="mostrarMenuContextual(event, ${conv.idConversacion})"
+                     ontouchstart="iniciarToqueLargo(event, ${conv.idConversacion})"
+                     ontouchend="cancelarToqueLargo()"
+                     ontouchmove="cancelarToqueLargo()">
                     <div class="avatar"><i class="fa-solid fa-user"></i></div>
                     <div class="chat-info" style="display: flex; align-items: center; width: 100%;">
                         <div class="chat-name">${otroUsuario.alias}</div>
@@ -87,10 +97,81 @@ async function cargarConversaciones() {
         }));
 
         listaHTML.innerHTML = htmlConversaciones.join('');
-
     } catch (e) {
         console.error("Error al cargar conversaciones", e);
     }
+}
+
+// --- CONTROL DEL CLIC Y TOQUE LARGO ---
+function abrirChatSeguro(id, nombre) {
+    if (esToqueLargo) return; // Si fue un toque largo, no abrimos el chat
+    abrirChat(id, nombre);
+}
+
+function iniciarToqueLargo(event, idConv) {
+    esToqueLargo = false;
+    toqueLargoTimer = setTimeout(() => {
+        esToqueLargo = true;
+        mostrarMenuContextual(event, idConv, true);
+    }, 600); // 600 milisegundos para detectar "Toque largo"
+}
+
+function cancelarToqueLargo() {
+    clearTimeout(toqueLargoTimer);
+}
+
+function mostrarMenuContextual(e, idConv, esMovil = false) {
+    e.preventDefault(); // Evita el menú nativo del navegador
+    chatSeleccionadoContextual = idConv;
+    
+    const menu = document.getElementById('menu-contextual');
+    
+    // Calcula la posición del clic o del dedo
+    let x = esMovil ? e.touches[0].clientX : e.clientX;
+    let y = esMovil ? e.touches[0].clientY : e.clientY;
+
+    menu.style.left = `${x}px`;
+    menu.style.top = `${y}px`;
+    menu.classList.remove('hidden');
+}
+
+// Ocultar el menú al hacer clic en cualquier otro lado
+document.addEventListener('click', (e) => {
+    const menu = document.getElementById('menu-contextual');
+    if (menu && !menu.contains(e.target)) {
+        menu.classList.add('hidden');
+    }
+});
+
+// --- ELIMINAR CONVERSACIÓN ---
+function confirmarEliminarChat() {
+    document.getElementById('menu-contextual').classList.add('hidden');
+    
+    if (!chatSeleccionadoContextual) return;
+
+    mostrarMiniModal("¿Eliminar este chat?\nSe borrará para ti, pero la otra persona aún podrá verlo.", true, async () => {
+        try {
+            const respuesta = await fetch(`${API_URL}/api/conversaciones/${chatSeleccionadoContextual}/eliminar/${usuarioActual.idUsuario}`, {
+                method: 'PUT'
+            });
+
+            if (respuesta.ok) {
+                // Si teníamos ese chat abierto en pantalla, lo cerramos
+                if (conversacionActiva === chatSeleccionadoContextual) {
+                    volverAListaChats();
+                    document.getElementById('pantalla-vacia').classList.remove('hidden');
+                    document.getElementById('pantalla-activa').classList.add('hidden');
+                    conversacionActiva = null;
+                }
+                // Refrescamos la lista
+                cargarConversaciones();
+            } else {
+                mostrarMiniModal("Error al eliminar la conversación.", false);
+            }
+        } catch (e) {
+            mostrarMiniModal("Error de conexión.", false);
+        }
+    });
 }
 
 // 3. Iniciar un chat nuevo
@@ -144,7 +225,7 @@ async function abrirChat(idConversacion, nombreContacto) {
         await fetch(`${API_URL}/api/mensajes/leer/${idConversacion}/${usuarioActual.idUsuario}`, { method: 'PUT' });
         cargarConversaciones(); 
 
-        const respuesta = await fetch(`${API_URL}/api/mensajes/historial/${idConversacion}`);
+        const respuesta = await fetch(`${API_URL}/api/mensajes/historial/${idConversacion}/${usuarioActual.idUsuario}`);
         const mensajes = await respuesta.json();
         
         const historialHTML = document.getElementById('historial-mensajes');
