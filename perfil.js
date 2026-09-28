@@ -50,7 +50,6 @@ async function guardarPerfil() {
         return;
     }
 
-    // Si el usuario no cambió nada, simplemente cerramos la ventana
     if (nuevoAlias === usuarioActual.alias && nuevoTelefono === usuarioActual.telefono) {
         cerrarModalPerfil();
         return;
@@ -69,18 +68,18 @@ async function guardarPerfil() {
         if (respuesta.ok) {
             const usuarioActualizado = await respuesta.json();
             
-            // Refresca la sesión guardada
             localStorage.setItem('usuarioActual', JSON.stringify(usuarioActualizado));
             usuarioActual = usuarioActualizado;
             
-            // Actualiza visualmente el nombre en el panel izquierdo
             document.getElementById('mi-nombre-perfil').innerText = usuarioActual.alias;
             
             cerrarModalPerfil();
             mostrarMiniModal("¡Perfil actualizado correctamente!", false);
         } else {
-            // Evaluamos si el backend nos rechaza porque el número ya existe
             const error = await respuesta.text();
+            
+            // --- NUEVO: Cerramos el modal de perfil antes de mostrar el error ---
+            cerrarModalPerfil(); 
             
             if (error === "NUMERO_EXISTENTE" || respuesta.status === 409) {
                 mostrarMiniModal(
@@ -92,6 +91,7 @@ async function guardarPerfil() {
             }
         }
     } catch (e) {
+        cerrarModalPerfil();
         mostrarMiniModal("Error de conexión al guardar el perfil.", false);
     }
 }

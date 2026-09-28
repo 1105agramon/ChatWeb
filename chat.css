@@ -378,3 +378,7 @@ body {
 .modal-input:focus {
     border-color: var(--acento-principal);
 }
+/* Asegura que la mini alerta siempre esté por encima de cualquier otra ventana */
+#mini-modal {
+    z-index: 5000 !important;
+}
