@@ -40,59 +40,68 @@ function cerrarModalSeguridad() {
     document.getElementById('modal-seguridad').classList.add('hidden');
 }
 
-// --- ACTUALIZACIÓN DE PERFIL ---
-async function guardarPerfil() {
-    const nuevoAlias = document.getElementById('edit-alias').value.trim();
-    const nuevoTelefono = document.getElementById('edit-telefono').value.trim();
+/// --- ACTUALIZACIÓN DE SEGURIDAD ---
+async function guardarSeguridad() {
+    const currentPassword = document.getElementById('seg-current-password').value.trim();
+    const newPassword = document.getElementById('seg-new-password').value.trim();
+    const newPin = document.getElementById('seg-new-pin').value.trim();
+    const newPregunta = document.getElementById('seg-new-pregunta').value.trim();
+    const newRespuesta = document.getElementById('seg-new-respuesta').value.trim();
 
-    if (!nuevoAlias || !nuevoTelefono) {
-        mostrarMiniModal("Alias y Teléfono son obligatorios.", false);
+    if (!currentPassword) {
+        mostrarMiniModal("Debes ingresar tu contraseña actual para autorizar los cambios.", false);
         return;
     }
 
-    // Si el usuario no cambió nada, simplemente cerramos la ventana
-    if (nuevoAlias === usuarioActual.alias && nuevoTelefono === usuarioActual.telefono) {
-        cerrarModalPerfil();
+    if (!newPassword && !newPin && !newPregunta && !newRespuesta) {
+        mostrarMiniModal("No has ingresado ningún dato nuevo para actualizar.", false);
+        return;
+    }
+
+    if (newPin && (newPin.length !== 4 || isNaN(newPin))) {
+        mostrarMiniModal("El nuevo PIN debe ser exactamente de 4 números.", false);
+        return;
+    }
+
+    if (newPregunta && (!newPregunta.includes('¿') || !newPregunta.includes('?'))) {
+        mostrarMiniModal("La nueva pregunta debe incluir los signos (¿) y (?).", false);
+        return;
+    }
+
+    if ((newPregunta && !newRespuesta) || (!newPregunta && newRespuesta)) {
+        mostrarMiniModal("Si deseas cambiar la pregunta de seguridad, debes ingresar tanto la nueva pregunta como la nueva respuesta.", false);
         return;
     }
 
     try {
-        const respuesta = await fetch(`${API_URL}/api/usuarios/${usuarioActual.idUsuario}/perfil`, {
+        const respuesta = await fetch(`${API_URL}/api/usuarios/${usuarioActual.idUsuario}/seguridad`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                alias: nuevoAlias, 
-                telefono: nuevoTelefono 
+            body: JSON.stringify({
+                currentPassword: currentPassword,
+                newPassword: newPassword,
+                newPin: newPin,
+                newPregunta: newPregunta,
+                newRespuesta: newRespuesta
             })
         });
 
         if (respuesta.ok) {
-            const usuarioActualizado = await respuesta.json();
-            
-            // Refresca la sesión guardada
-            localStorage.setItem('usuarioActual', JSON.stringify(usuarioActualizado));
-            usuarioActual = usuarioActualizado;
-            
-            // Actualiza visualmente el nombre en el panel izquierdo
-            document.getElementById('mi-nombre-perfil').innerText = usuarioActual.alias;
-            
-            cerrarModalPerfil();
-            mostrarMiniModal("¡Perfil actualizado correctamente!", false);
+            mostrarMiniModal("¡Datos de seguridad actualizados correctamente!", false, () => {
+                cerrarModalSeguridad();
+                // Limpiamos los campos por seguridad
+                document.getElementById('seg-current-password').value = '';
+                document.getElementById('seg-new-password').value = '';
+                document.getElementById('seg-new-pin').value = '';
+                document.getElementById('seg-new-pregunta').value = '';
+                document.getElementById('seg-new-respuesta').value = '';
+            });
         } else {
-            // Evaluamos si el backend nos rechaza porque el número ya existe
             const error = await respuesta.text();
-            
-            if (error === "NUMERO_EXISTENTE" || respuesta.status === 409) {
-                mostrarMiniModal(
-                    "Este número ya está registrado por una tercera persona.\n\nSi crees que es un error, por favor comunícate con soporte enviando un correo a:\n1105agramon@gmail.com", 
-                    false
-                );
-            } else {
-                mostrarMiniModal(error, false);
-            }
+            mostrarMiniModal(error, false);
         }
     } catch (e) {
-        mostrarMiniModal("Error de conexión al guardar el perfil.", false);
+        mostrarMiniModal("Error de conexión con el servidor.", false);
     }
 }
 

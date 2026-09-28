@@ -169,22 +169,46 @@
 
     <!-- MODAL SEGURIDAD -->
     <div id="modal-seguridad" class="mini-modal-overlay hidden">
-        <div class="mini-modal-box" style="width: 320px;">
+        <div class="mini-modal-box" style="width: 340px; max-height: 90vh; overflow-y: auto;">
             <h3 style="margin-bottom: 15px; color: var(--texto-principal);">Seguridad</h3>
-            
-            <!-- Aquí irán los campos de PIN, Contraseña y Pregunta en el futuro -->
-            <p style="font-size: 13px; color: var(--texto-secundario); margin-bottom: 20px;">
-                Opciones de seguridad en construcción...
-            </p>
+
+            <!-- Contraseña Actual (Obligatoria para cualquier cambio) -->
+            <div style="text-align: left; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid var(--color-border);">
+                <label style="font-size: 12px; color: var(--acento-principal); font-weight: bold;">Contraseña Actual (Obligatoria)</label>
+                <input type="password" id="seg-current-password" class="modal-input" placeholder="Requerida para guardar cambios">
+            </div>
+
+            <div style="text-align: left; margin-bottom: 10px;">
+                <label style="font-size: 12px; color: var(--texto-secundario);">Nueva Contraseña</label>
+                <input type="password" id="seg-new-password" class="modal-input" placeholder="Dejar en blanco para no cambiar">
+            </div>
+
+            <div style="text-align: left; margin-bottom: 10px;">
+                <label style="font-size: 12px; color: var(--texto-secundario);">Nuevo PIN (4 dígitos)</label>
+                <input type="text" id="seg-new-pin" class="modal-input" maxlength="4" placeholder="Dejar en blanco para no cambiar">
+            </div>
+
+            <div style="text-align: left; margin-bottom: 10px;">
+                <label style="font-size: 12px; color: var(--texto-secundario);">Nueva Pregunta secreta</label>
+                <input type="text" id="seg-new-pregunta" class="modal-input" placeholder="Debe incluir ¿ y ?">
+            </div>
+
+            <div style="text-align: left; margin-bottom: 20px;">
+                <label style="font-size: 12px; color: var(--texto-secundario);">Nueva Respuesta</label>
+                <input type="text" id="seg-new-respuesta" class="modal-input" placeholder="Dejar en blanco para no cambiar">
+            </div>
+
+            <div class="mini-modal-actions" style="margin-bottom: 15px;">
+                <button class="mini-btn mini-btn-cancel" onclick="cerrarModalSeguridad()">Cancelar</button>
+                <button class="mini-btn mini-btn-confirm" onclick="guardarSeguridad()">Guardar</button>
+            </div>
 
             <div class="dropdown-divider"></div>
-            <button class="mini-btn" style="background: rgba(251,59,47,0.1); color: var(--acento-principal); width: 100%; margin-bottom: 15px;" onclick="confirmarDesactivarCuenta()">
+            
+            <!-- Botón de peligro para desactivar -->
+            <button class="mini-btn" style="background: rgba(251,59,47,0.1); color: var(--acento-principal); width: 100%; margin-top: 10px;" onclick="confirmarDesactivarCuenta()">
                 <i class="fa-solid fa-user-slash"></i> Desactivar Cuenta
             </button>
-
-            <div class="mini-modal-actions">
-                <button class="mini-btn mini-btn-cancel" style="width: 100%;" onclick="cerrarModalSeguridad()">Cerrar</button>
-            </div>
         </div>
     </div>
     
