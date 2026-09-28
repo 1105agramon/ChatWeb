@@ -40,7 +40,63 @@ function cerrarModalSeguridad() {
     document.getElementById('modal-seguridad').classList.add('hidden');
 }
 
-/// --- ACTUALIZACIÓN DE SEGURIDAD ---
+// --- ACTUALIZACIÓN DE PERFIL ---
+async function guardarPerfil() {
+    const nuevoAlias = document.getElementById('edit-alias').value.trim();
+    const nuevoTelefono = document.getElementById('edit-telefono').value.trim();
+
+    if (!nuevoAlias || !nuevoTelefono) {
+        mostrarMiniModal("Alias y Teléfono son obligatorios.", false);
+        return;
+    }
+
+    // Si el usuario no cambió nada, simplemente cerramos la ventana
+    if (nuevoAlias === usuarioActual.alias && nuevoTelefono === usuarioActual.telefono) {
+        cerrarModalPerfil();
+        return;
+    }
+
+    try {
+        const respuesta = await fetch(`${API_URL}/api/usuarios/${usuarioActual.idUsuario}/perfil`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                alias: nuevoAlias, 
+                telefono: nuevoTelefono 
+            })
+        });
+
+        if (respuesta.ok) {
+            const usuarioActualizado = await respuesta.json();
+            
+            // Refresca la sesión guardada
+            localStorage.setItem('usuarioActual', JSON.stringify(usuarioActualizado));
+            usuarioActual = usuarioActualizado;
+            
+            // Actualiza visualmente el nombre en el panel izquierdo
+            document.getElementById('mi-nombre-perfil').innerText = usuarioActual.alias;
+            
+            cerrarModalPerfil();
+            mostrarMiniModal("¡Perfil actualizado correctamente!", false);
+        } else {
+            // Evaluamos si el backend nos rechaza porque el número ya existe
+            const error = await respuesta.text();
+            
+            if (error === "NUMERO_EXISTENTE" || respuesta.status === 409) {
+                mostrarMiniModal(
+                    "Este número ya está registrado por una tercera persona.\n\nSi crees que es un error, por favor comunícate con soporte enviando un correo a:\n1105agramon@gmail.com", 
+                    false
+                );
+            } else {
+                mostrarMiniModal(error, false);
+            }
+        }
+    } catch (e) {
+        mostrarMiniModal("Error de conexión al guardar el perfil.", false);
+    }
+}
+
+// --- ACTUALIZACIÓN DE SEGURIDAD ---
 async function guardarSeguridad() {
     const currentPassword = document.getElementById('seg-current-password').value.trim();
     const newPassword = document.getElementById('seg-new-password').value.trim();
