@@ -223,3 +223,22 @@ body {
         padding-right: env(safe-area-inset-right);
     }
 }
+
+/* --- ESTILOS PARA CITAR/RESPONDER MENSAJES --- */
+.mensaje-citado {
+    background: rgba(0, 0, 0, 0.25);
+    border-left: 4px solid #2ecc71;
+    padding: 6px 10px;
+    border-radius: 4px;
+    margin-bottom: 8px;
+    font-size: 12px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+}
+.citado-autor { font-weight: bold; color: #2ecc71; margin-bottom: 2px; }
+.citado-texto { color: var(--texto-secundario); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px; }
+
+/* Botón de flecha que aparece al lado de la hora */
+.btn-responder { font-size: 12px; color: rgba(255,255,255,0.4); cursor: pointer; margin-right: 8px; transition: color 0.2s; }
+.btn-responder:hover { color: #2ecc71; }

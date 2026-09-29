@@ -298,6 +298,27 @@ function agregarMensajeAlDOM(msg, autoScroll) {
     divMensaje.className = `mensaje ${claseGlobo}`;
     divMensaje.id = `msg-${msg.idMensaje}`;
 
+    // --- NUEVO: Cuadro de mensaje citado (respuesta) ---
+    if (msg.mensajeRespondido) {
+        const divCitado = document.createElement('div');
+        divCitado.className = 'mensaje-citado';
+        
+        // Al hacer clic en la cita, hace scroll hacia el mensaje original
+        divCitado.onclick = () => {
+            const original = document.getElementById(`msg-${msg.mensajeRespondido.idMensaje}`);
+            if (original) original.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        };
+        
+        const autorCitado = msg.mensajeRespondido.remitente.idUsuario === usuarioActual.idUsuario ? "Tú" : msg.mensajeRespondido.remitente.alias;
+        const textoCitado = msg.mensajeRespondido.contenido ? msg.mensajeRespondido.contenido : "📷 Imagen";
+        
+        divCitado.innerHTML = `
+            <span class="citado-autor">${autorCitado}</span>
+            <span class="citado-texto">${textoCitado}</span>
+        `;
+        divMensaje.appendChild(divCitado);
+    }
+
     if (msg.urlImagen) {
         const imageUrl = `${API_URL}${msg.urlImagen}`;
         const imgElement = document.createElement('img');
@@ -327,9 +348,17 @@ function agregarMensajeAlDOM(msg, autoScroll) {
         }
     }
 
+    // --- NUEVO: Flecha de Responder y acción de Doble clic ---
+    const textoRespuesta = msg.contenido ? msg.contenido.replace(/'/g, "\\'") : '';
+    const autorRespuesta = esMio ? "Tú" : msg.remitente.alias;
+    
+    // Al hacer doble clic en el mensaje, se activa la caja de respuesta
+    divMensaje.ondblclick = () => prepararRespuesta(msg.idMensaje, autorRespuesta, textoRespuesta);
+
     const infoInferior = document.createElement('div');
     infoInferior.className = 'mensaje-info-inferior';
     infoInferior.innerHTML = `
+        <i class="fa-solid fa-reply btn-responder" onclick="prepararRespuesta(${msg.idMensaje}, '${autorRespuesta}', '${textoRespuesta}')"></i>
         <span class="mensaje-hora">${hora}</span>
         ${checkmarkHTML}
     `;
@@ -414,6 +443,11 @@ async function enviarMensaje() {
         if (texto) formData.append('contenido', texto);
         if (archivo) formData.append('imagen', archivo);
 
+        // --- NUEVO: Adjuntamos el ID del mensaje original si estamos respondiendo ---
+        if (mensajeEnRespuestaId) {
+            formData.append('idMensajeRespondido', mensajeEnRespuestaId);
+        }
+
         const respuesta = await fetch(`${API_URL}/api/mensajes/enviar`, {
             method: 'POST',
             body: formData 
@@ -423,6 +457,9 @@ async function enviarMensaje() {
             inputTexto.value = '';
             archivoInput.value = '';
             document.getElementById('nombre-archivo-preview').classList.add('hidden');
+            
+            // --- NUEVO: Limpiamos el banner de respuesta al enviar exitosamente ---
+            cancelarRespuesta(); 
         } else {
             mostrarMiniModal("Ocurrió un error al enviar el mensaje.", false);
         }
@@ -549,4 +586,22 @@ function conectarNotificacionesGenerales() {
             }
         });
     });
+}
+
+let mensajeEnRespuestaId = null;
+
+function prepararRespuesta(idMensaje, autor, texto) {
+    cancelarEdicion(); // No puedes editar y responder al mismo tiempo
+    mensajeEnRespuestaId = idMensaje;
+    
+    document.getElementById('respuesta-autor').innerText = autor;
+    document.getElementById('respuesta-texto').innerText = texto || "📷 Imagen";
+    
+    document.getElementById('banner-respuesta').classList.remove('hidden');
+    document.getElementById('input-texto').focus();
+}
+
+function cancelarRespuesta() {
+    mensajeEnRespuestaId = null;
+    document.getElementById('banner-respuesta').classList.add('hidden');
 }
