@@ -7,6 +7,8 @@ let stompClient = null;
 let stompClientGeneral = null; 
 let mensajeEnEdicionId = null;
 
+let usuariosOnline = []; // Guardará los IDs de quienes están conectados
+
 let enviandoMensaje = false; // Candado para evitar envíos múltiples
 
 if (!usuarioActual) {
@@ -61,9 +63,13 @@ let toqueLargoTimer;
 let esToqueLargo = false;
 let chatSeleccionadoContextual = null;
 
-// 2. Cargar lista de chats
+// 2. Cargar lista de chats (ACTUALIZADA)
 async function cargarConversaciones() {
     try {
+        // --- NUEVO: Obtener lista actual de usuarios en línea ---
+        const resEstado = await fetch(`${API_URL}/api/usuarios/estados-online`);
+        usuariosOnline = await resEstado.json();
+
         const respuesta = await fetch(`${API_URL}/api/conversaciones/usuario/${usuarioActual.idUsuario}`);
         const conversaciones = await respuesta.json();
         
@@ -80,14 +86,23 @@ async function cargarConversaciones() {
                 ? `<div class="unread-badge">${cantidadNoLeidos}</div>` 
                 : '';
 
+            // --- NUEVO: Validar si el usuario está en la lista de conectados ---
+            const isOnline = usuariosOnline.includes(otroUsuario.idUsuario);
+            const claseEstado = isOnline ? 'online' : 'offline';
+
             return `
                 <div class="chat-item" 
-                     onclick="abrirChatSeguro(${conv.idConversacion}, '${otroUsuario.alias}')"
+                     onclick="abrirChatSeguro(${conv.idConversacion}, '${otroUsuario.alias}', ${otroUsuario.idUsuario})"
                      oncontextmenu="mostrarMenuContextual(event, ${conv.idConversacion})"
                      ontouchstart="iniciarToqueLargo(event, ${conv.idConversacion})"
                      ontouchend="cancelarToqueLargo()"
                      ontouchmove="cancelarToqueLargo()">
-                    <div class="avatar"><i class="fa-solid fa-user"></i></div>
+                     
+                    <div class="avatar-container">
+                        <div class="avatar"><i class="fa-solid fa-user"></i></div>
+                        <div class="status-dot ${claseEstado}" id="status-dot-${otroUsuario.idUsuario}"></div>
+                    </div>
+                    
                     <div class="chat-info" style="display: flex; align-items: center; width: 100%;">
                         <div class="chat-name">${otroUsuario.alias}</div>
                         ${badgeHTML}
@@ -102,10 +117,10 @@ async function cargarConversaciones() {
     }
 }
 
-// --- CONTROL DEL CLIC Y TOQUE LARGO ---
-function abrirChatSeguro(id, nombre) {
-    if (esToqueLargo) return; // Si fue un toque largo, no abrimos el chat
-    abrirChat(id, nombre);
+// ACTUALIZACIÓN NECESARIA PARA PASAR EL ID DEL DESTINO
+function abrirChatSeguro(id, nombre, idUsuarioDestino) {
+    if (typeof esToqueLargo !== 'undefined' && esToqueLargo) return; 
+    abrirChat(id, nombre, idUsuarioDestino);
 }
 
 function iniciarToqueLargo(event, idConv) {
@@ -174,12 +189,18 @@ function confirmarEliminarChat() {
     });
 }
 
-// 3. Iniciar un chat nuevo
+// 3. Iniciar un chat nuevo o abrir uno existente
 async function iniciarNuevoChat() {
     const inputBuscador = document.getElementById('buscar-numero');
-    const numero = inputBuscador.value.trim(); // .trim() elimina espacios en blanco accidentales
+    const numero = inputBuscador.value.trim();
     
     if (!numero) return;
+
+    // Validación 1: El usuario no puede buscar su propio número escrito a mano
+    if (numero === usuarioActual.telefono) {
+        mostrarMiniModal("No puedes iniciar un chat contigo mismo.", false);
+        return;
+    }
 
     try {
         const resBusqueda = await fetch(`${API_URL}/api/usuarios/sincronizar-contactos`, {
@@ -190,19 +211,33 @@ async function iniciarNuevoChat() {
         
         const contactos = await resBusqueda.json();
         
-        // Si la lista viene vacía, el usuario no existe
         if (contactos.length === 0) {
             mostrarMiniModal("No se encontró ningún usuario registrado con el número:\n" + numero, false);
             return;
         }
 
-        const idDestino = contactos[0].idUsuario;
+        const contactoDestino = contactos[0];
+        
+        // Validación 2: Doble protección por si el ID coincide
+        if (contactoDestino.idUsuario === usuarioActual.idUsuario) {
+            mostrarMiniModal("No puedes iniciar un chat contigo mismo.", false);
+            return;
+        }
 
-        const resChat = await fetch(`${API_URL}/api/conversaciones/iniciar?idUsuario1=${usuarioActual.idUsuario}&idUsuario2=${idDestino}`, { method: 'POST' });
+        const resChat = await fetch(`${API_URL}/api/conversaciones/iniciar?idUsuario1=${usuarioActual.idUsuario}&idUsuario2=${contactoDestino.idUsuario}`, { method: 'POST' });
         
         if (resChat.ok) {
-            inputBuscador.value = ''; // Limpiamos la barra tras tener éxito
-            cargarConversaciones(); 
+            const conversacion = await resChat.json(); 
+            
+            inputBuscador.value = ''; // Limpiar barra
+            cargarConversaciones(); // Refrescar el panel izquierdo
+            
+            // --- NUEVO: Abrimos el chat automáticamente para que el usuario escriba de inmediato ---
+            abrirChatSeguro(conversacion.idConversacion, contactoDestino.alias);
+            
+        } else {
+            const error = await resChat.text();
+            mostrarMiniModal(error, false);
         }
     } catch (e) {
         console.error("Error al iniciar chat", e);
@@ -210,8 +245,8 @@ async function iniciarNuevoChat() {
     }
 }
 
-// 4. Abrir un chat
-async function abrirChat(idConversacion, nombreContacto) {
+// 4. Abrir un chat (ACTUALIZADA)
+async function abrirChat(idConversacion, nombreContacto, idUsuarioDestino) {
     conversacionActiva = idConversacion;
     cancelarEdicion(); 
     
@@ -220,6 +255,23 @@ async function abrirChat(idConversacion, nombreContacto) {
     document.getElementById('nombre-chat-activo').innerText = nombreContacto;
 
     document.querySelector('.app-container').classList.add('chat-activo-mobile');
+
+    // --- NUEVO: Actualizar la cabecera visualmente (Requiere que hayas modificado tu HTML del paso 3 anterior) ---
+    if (idUsuarioDestino) {
+        const headerDot = document.getElementById('header-status-dot');
+        const headerTexto = document.getElementById('chat-activo-texto-estado');
+        
+        if (headerDot) {
+            headerDot.setAttribute('data-usuario-activo', idUsuarioDestino);
+            const isOnline = usuariosOnline.includes(idUsuarioDestino);
+            headerDot.className = `status-dot ${isOnline ? 'online' : 'offline'}`;
+            
+            if (headerTexto) {
+                headerTexto.innerText = isOnline ? 'En línea' : 'Desconectado';
+                headerTexto.style.color = isOnline ? '#2ecc71' : 'var(--texto-secundario)';
+            }
+        }
+    }
 
     try {
         await fetch(`${API_URL}/api/mensajes/leer/${idConversacion}/${usuarioActual.idUsuario}`, { method: 'PUT' });
@@ -540,7 +592,7 @@ function mostrarToast(titulo, mensaje, idConversacion) {
     setTimeout(() => { toast.classList.add('hidden'); }, 4000);
 }
 
-// 10. Conexión general
+// 10. Conexión general (ACTUALIZADA)
 function conectarNotificacionesGenerales() {
     if (stompClientGeneral !== null) {
         stompClientGeneral.disconnect();
@@ -551,8 +603,18 @@ function conectarNotificacionesGenerales() {
     stompClientGeneral.debug = null;
 
     stompClientGeneral.connect({}, function (frame) {
+        
+        // --- NUEVO: Avisar al servidor que entramos ---
+        stompClientGeneral.send("/app/usuario/conectar", {}, usuarioActual.idUsuario);
+
+        // --- NUEVO: Escuchar conexiones y desconexiones ---
+        stompClientGeneral.subscribe("/topic/estado-usuarios", function (mensaje) {
+            const estado = JSON.parse(mensaje.body);
+            actualizarEstadoVisual(estado.idUsuario, estado.online);
+        });
+
+        // Tu código de notificaciones intacto
         stompClientGeneral.subscribe(`/topic/usuario/${usuarioActual.idUsuario}`, function (notificacion) {
-            
             let datosMensaje;
             try {
                 datosMensaje = JSON.parse(notificacion.body);
@@ -580,7 +642,7 @@ function conectarNotificacionesGenerales() {
 
                     alertaNativa.onclick = function() {
                         window.focus(); 
-                        abrirChat(idChatNotificado, nombreRemitente); 
+                        abrirChat(idChatNotificado, nombreRemitente, datosMensaje.remitente.idUsuario); 
                     };
                 }
             }
@@ -604,4 +666,26 @@ function prepararRespuesta(idMensaje, autor, texto) {
 function cancelarRespuesta() {
     mensajeEnRespuestaId = null;
     document.getElementById('banner-respuesta').classList.add('hidden');
+}
+
+// --- NUEVA FUNCIÓN: Cambia el color de los puntos ---
+function actualizarEstadoVisual(idUsuario, isOnline) {
+    if (isOnline && !usuariosOnline.includes(idUsuario)) usuariosOnline.push(idUsuario);
+    else if (!isOnline) usuariosOnline = usuariosOnline.filter(id => id !== idUsuario);
+
+    const dotLateral = document.getElementById(`status-dot-${idUsuario}`);
+    if (dotLateral) {
+        dotLateral.className = `status-dot ${isOnline ? 'online' : 'offline'}`;
+    }
+
+    const headerDot = document.getElementById('header-status-dot');
+    const headerTexto = document.getElementById('chat-activo-texto-estado');
+    
+    if (headerDot && headerDot.getAttribute('data-usuario-activo') == idUsuario) {
+        headerDot.className = `status-dot ${isOnline ? 'online' : 'offline'}`;
+        if (headerTexto) {
+            headerTexto.innerText = isOnline ? 'En línea' : 'Desconectado';
+            headerTexto.style.color = isOnline ? '#2ecc71' : 'var(--texto-secundario)';
+        }
+    }
 }

@@ -12,7 +12,6 @@
     <div class="app-container">
         
         <!-- PANEL IZQUIERDO: Lista de Chats -->
-        <!-- Se le agrega el id "sidebar" para controlarlo desde JS en móviles -->
         <aside class="sidebar" id="sidebar">
             <header class="sidebar-header">
                 <div class="mi-perfil">
@@ -20,7 +19,7 @@
                     <span id="mi-nombre-perfil">Cargando...</span>
                 </div>
                 
-                <!-- NUEVO: Menú desplegable -->
+                <!-- Menú desplegable -->
                 <div class="header-actions" style="position: relative;">
                     <button class="btn-icon" onclick="toggleMenuDesplegable()" title="Opciones">
                         <i class="fa-solid fa-ellipsis-vertical"></i>
@@ -60,7 +59,6 @@
         </aside>
 
         <!-- PANEL DERECHO: Área de Mensajes -->
-        <!-- Se le agrega el id "chat-area" para controlarlo desde JS en móviles -->
         <main class="chat-area" id="chat-area">
             
             <!-- Estado inicial cuando no hay chat seleccionado -->
@@ -73,14 +71,19 @@
             <!-- Chat activo -->
             <div id="pantalla-activa" class="active-chat hidden">
                 <header class="chat-header">
-                    <!-- NUEVO: Botón de atrás (solo visible en móviles) -->
+                    <!-- Botón de atrás (solo visible en móviles) -->
                     <button class="btn-icon btn-back-mobile" onclick="volverAListaChats()">
                         <i class="fa-solid fa-arrow-left"></i>
                     </button>
+                    
                     <div class="contacto-info">
-                        <div class="avatar"><i class="fa-solid fa-user"></i></div>
+                        <div class="avatar-container">
+                            <div class="avatar"><i class="fa-solid fa-user"></i></div>
+                            <div class="status-dot offline" id="header-status-dot"></div>
+                        </div>
                         <div class="detalles-contacto">
                             <h3 id="nombre-chat-activo">Nombre Contacto</h3>
+                            <span id="chat-activo-texto-estado" style="font-size: 12px; color: var(--texto-secundario);">Desconectado</span>
                         </div>
                     </div>
                 </header>
@@ -146,6 +149,7 @@
             <p id="toast-cuerpo">Tienes un nuevo mensaje esperando.</p>
         </div>
     </div>
+    
     <!-- MINI MODAL FLOTANTE -->
     <div id="mini-modal" class="mini-modal-overlay hidden">
         <div class="mini-modal-box">
@@ -162,7 +166,6 @@
         <div class="mini-modal-box" style="width: 320px;">
             <h3 style="margin-bottom: 15px; color: var(--texto-principal);">Editar Perfil</h3>
             
-            <!-- NUEVO: Contenedor para mensajes dentro del modal -->
             <div id="perfil-mensaje" class="inline-message hidden"></div>
             
             <div style="text-align: left; margin-bottom: 10px;">
@@ -187,10 +190,8 @@
         <div class="mini-modal-box" style="width: 340px; max-height: 90vh; overflow-y: auto;">
             <h3 style="margin-bottom: 15px; color: var(--texto-principal);">Seguridad</h3>
 
-            <!-- NUEVO: Contenedor para mensajes de error/éxito -->
             <div id="seguridad-mensaje" class="inline-message hidden"></div>
 
-            <!-- Contraseña Actual (Obligatoria para cualquier cambio) -->
             <div style="text-align: left; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid var(--color-border);">
                 <label style="font-size: 12px; color: var(--acento-principal); font-weight: bold;">Contraseña Actual (Obligatoria)</label>
                 <input type="password" id="seg-current-password" class="modal-input" placeholder="Requerida para guardar cambios">
