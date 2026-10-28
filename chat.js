@@ -689,3 +689,36 @@ function actualizarEstadoVisual(idUsuario, isOnline) {
         }
     }
 }
+
+
+// --- NUEVO: Soporte para pegar imágenes desde el portapapeles (Ctrl+V) ---
+document.addEventListener('paste', function(e) {
+    // Obtenemos todos los elementos almacenados actualmente en el portapapeles
+    const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+    
+    for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        
+        // Verificamos si lo que el usuario intentó pegar es un archivo de imagen
+        if (item.kind === 'file' && item.type.startsWith('image/')) {
+            e.preventDefault(); // Evitamos el comportamiento por defecto del navegador
+            
+            // Extraemos la imagen del portapapeles como si fuera un archivo real
+            const archivoPegado = item.getAsFile();
+            
+            // Usamos DataTransfer como puente para inyectar el archivo en el input
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(archivoPegado);
+            
+            const inputImagen = document.getElementById('input-imagen');
+            inputImagen.files = dataTransfer.files;
+            
+            // Disparamos la vista previa para que el usuario sepa que la imagen se cargó
+            if (typeof mostrarVistaPrevia === 'function') {
+                mostrarVistaPrevia();
+            }
+            
+            break; // Solo procesamos la primera imagen encontrada
+        }
+    }
+});
