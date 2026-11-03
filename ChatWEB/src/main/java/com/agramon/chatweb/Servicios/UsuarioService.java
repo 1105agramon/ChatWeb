@@ -109,52 +109,55 @@ public class UsuarioService {
         });
     }
 
-    // --- NUEVO: Actualizar Perfil (Alias y Teléfono) ---
     public Usuario actualizarPerfil(Long idUsuario, String nuevoAlias, String nuevoTelefono) {
         Usuario usuario = usuarioRepository.findById(idUsuario)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado."));
 
-        // Si el usuario está intentando cambiar su número a uno distinto
         if (!usuario.getTelefono().equals(nuevoTelefono)) {
-            // Verificamos si ese nuevo número ya le pertenece a otra persona
             if (usuarioRepository.findByTelefono(nuevoTelefono).isPresent()) {
                 throw new RuntimeException("NUMERO_EXISTENTE");
             }
             usuario.setTelefono(nuevoTelefono);
         }
 
-        // Actualizamos el alias
         usuario.setAlias(nuevoAlias);
-
         return usuarioRepository.save(usuario);
     }
 
-    // --- NUEVO: Actualizar Seguridad (Contraseña, PIN, Pregunta y Respuesta) ---
     public void actualizarSeguridad(Long idUsuario, String currentPassword, String newPassword, String newPin, String newPregunta, String newRespuesta) {
         Usuario usuario = usuarioRepository.findById(idUsuario)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado."));
 
-        // Validamos estrictamente la contraseña actual
         if (!passwordEncoder.matches(currentPassword, usuario.getPassword())) {
             throw new RuntimeException("La contraseña actual es incorrecta.");
         }
 
-        // Si mandó una contraseña nueva, la encriptamos y la seteamos
         if (newPassword != null && !newPassword.trim().isEmpty()) {
             usuario.setPassword(passwordEncoder.encode(newPassword));
         }
 
-        // Si mandó un nuevo PIN, lo encriptamos
         if (newPin != null && !newPin.trim().isEmpty()) {
             usuario.setPinRecuperacion(passwordEncoder.encode(newPin));
         }
 
-        // Si mandó nueva pregunta y respuesta, guardamos la pregunta en mayúsculas y la respuesta encriptada en minúsculas
         if (newPregunta != null && !newPregunta.trim().isEmpty() && newRespuesta != null && !newRespuesta.trim().isEmpty()) {
             usuario.setPreguntaSeguridad(newPregunta.toUpperCase());
             usuario.setRespuestaSeguridad(passwordEncoder.encode(newRespuesta.toLowerCase()));
         }
 
         usuarioRepository.save(usuario);
+    }
+
+    // --- NUEVO: Actualizar Token de Firebase ---
+    public void actualizarTokenFcm(Long idUsuario, String tokenFcm) {
+        usuarioRepository.findById(idUsuario).ifPresent(usuario -> {
+            usuario.setTokenFcm(tokenFcm);
+            usuarioRepository.save(usuario);
+        });
+    }
+
+
+    public List<Usuario> buscarUsuarios(String filtro, Long idUsuarioActual) {
+        return usuarioRepository.buscarUsuarios(filtro, idUsuarioActual);
     }
 }

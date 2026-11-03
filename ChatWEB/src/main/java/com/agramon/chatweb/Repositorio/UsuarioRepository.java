@@ -2,6 +2,8 @@ package com.agramon.chatweb.Repositorio;
 
 import com.agramon.chatweb.Entidades.Usuario;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -15,4 +17,8 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
 
     // Buscar varios usuarios a la vez (útil si sincronizas contactos del teléfono)
     List<Usuario> findByTelefonoIn(List<String> telefonos);
+
+    @Query("SELECT u FROM Usuario u WHERE u.telefono = :filtro AND u.idUsuario != :idUsuarioActual")
+    List<Usuario> buscarUsuarios(@Param("filtro") String filtro, @Param("idUsuarioActual") Long idUsuarioActual);
+
 }

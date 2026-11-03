@@ -49,6 +49,9 @@ public class Usuario {
     @Column(name = "pin_recuperacion")
     private String pinRecuperacion;
 
+    @Column(name = "token_fcm")
+    private String tokenFcm;
+
     // Se ejecuta automáticamente antes de insertar en la BD
     @PrePersist
     protected void onCreate() {

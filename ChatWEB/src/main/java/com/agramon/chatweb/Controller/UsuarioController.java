@@ -26,7 +26,6 @@ public class UsuarioController {
             String telefono = datos.get("telefono");
             String alias = datos.get("alias");
             String password = datos.get("password");
-
             String pregunta = datos.get("preguntaSeguridad");
             String respuesta = datos.get("respuestaSeguridad");
             String pin = datos.get("pinRecuperacion");
@@ -101,7 +100,6 @@ public class UsuarioController {
         }
     }
 
-    // --- NUEVO ENDPOINT: Actualizar Perfil ---
     @PutMapping("/{id}/perfil")
     public ResponseEntity<?> actualizarPerfil(@PathVariable Long id, @RequestBody Map<String, String> datos) {
         try {
@@ -112,7 +110,6 @@ public class UsuarioController {
             return ResponseEntity.ok(usuarioActualizado);
 
         } catch (RuntimeException e) {
-            // Si el servicio detecta que el número ya existe, mandamos 409 Conflict
             if ("NUMERO_EXISTENTE".equals(e.getMessage())) {
                 return ResponseEntity.status(409).body(e.getMessage());
             }
@@ -120,7 +117,6 @@ public class UsuarioController {
         }
     }
 
-    // --- NUEVO ENDPOINT: Actualizar Seguridad ---
     @PutMapping("/{id}/seguridad")
     public ResponseEntity<?> actualizarSeguridad(@PathVariable Long id, @RequestBody Map<String, String> datos) {
         try {
@@ -137,4 +133,26 @@ public class UsuarioController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+
+    // --- NUEVO ENDPOINT: Recibir y guardar el Token de Firebase ---
+    @PutMapping("/{id}/token")
+    public ResponseEntity<?> actualizarTokenFcm(@PathVariable Long id, @RequestBody Map<String, String> payload) {
+        try {
+            String token = payload.get("token");
+            usuarioService.actualizarTokenFcm(id, token);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @GetMapping("/buscar")
+    public ResponseEntity<List<Usuario>> buscarUsuarios(
+            @RequestParam("filtro") String filtro,
+            @RequestParam("idUsuarioActual") Long idUsuarioActual) {
+
+        List<Usuario> resultados = usuarioService.buscarUsuarios(filtro, idUsuarioActual);
+        return ResponseEntity.ok(resultados);
+    }
+
 }
